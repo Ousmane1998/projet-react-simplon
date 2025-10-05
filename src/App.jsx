@@ -1,35 +1,70 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from 'react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
+import Depot from './pages/Depot';
+import Utilisateurs from './pages/Utilisateurs';
+import Annuler from './pages/Annuler';
+import Historique from './pages/Historique';
+import ProfilePage from './pages/ProfilePage';
+import Login from './pages/Login';
+import SettingsMenu from './pages/SettingsMenu';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [user, setUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          setUser(parsed);
+        }
+      }
+    } catch (err) {
+      console.error("Erreur de parsing user:", err);
+      localStorage.removeItem('user');
+    }
+  }, []);
+
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+    },
+  });
+
+  const LoginWrapper = (props) => <Login {...props} />;
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider theme={theme}>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginWrapper onLogin={setUser} />} />
+          {user ? (
+            <Route element={<Layout darkMode={darkMode} setDarkMode={setDarkMode} />}>
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/depot" element={<Depot />} />
+              <Route path="/utilisateurs" element={< Utilisateurs />} />
+              <Route path="/historique" element={<Historique />} />
+              <Route path="/profil" element={<ProfilePage />} />
+              <Route path="/parametres" element={<SettingsMenu darkMode={darkMode} setDarkMode={setDarkMode} />} />
+              <Route path="*" element={<Annuler />} />
+            </Route>
+          ) : (
+            <>
+             <Route path="*" element={<Navigate to="/login" />} />
+
+            </>
+          )}
+        </Routes>
+      </Router>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
